@@ -1267,7 +1267,7 @@ def screenshot(self, ctx={}, description=None):
 			if status == 'Successful' and subdomain_query.exists():
 				subdomain = subdomain_query.first()
 				screenshot_paths.append(screenshot_path)
-				subdomain.screenshot_path = screenshot_path.replace('/usr/src/scan_results/', '')
+				subdomain.screenshot_path = screenshot_path.replace(f'{RENGINE_RESULTS}/', '')
 				subdomain.save()
 				logger.warning(f'Added screenshot for {subdomain.name} to DB')
 
