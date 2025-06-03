@@ -1,6 +1,7 @@
 import csv
 import json
 import os
+import shutil
 import pprint
 import subprocess
 import time
@@ -2427,32 +2428,36 @@ def nuclei_scan(self, urls=[], ctx={}, description=None):
 	# severities_str = ','.join(severities)
 
 	# Get alive endpoints
-	if urls:
-		with open(input_path, 'w') as f:
-			f.write('\n'.join(urls))
-	else:
-		get_http_urls(
-			is_alive=enable_http_crawl,
-			ignore_files=True,
-			write_filepath=input_path,
-			ctx=ctx
-		)
+        if urls:
+                with open(input_path, 'w') as f:
+                        f.write('\n'.join(urls))
+        else:
+                get_http_urls(
+                        is_alive=enable_http_crawl,
+                        ignore_files=True,
+                        write_filepath=input_path,
+                        ctx=ctx
+                )
 
-	if intensity == 'normal': # reduce number of endpoints to scan
-		unfurl_filter = f'{self.results_dir}/urls_unfurled.txt'
-		run_command(
-			f"cat {input_path} | unfurl -u format %s://%d%p |uro > {unfurl_filter}",
-			shell=True,
-			history_file=self.history_file,
-			scan_id=self.scan_id,
-			activity_id=self.activity_id)
-		run_command(
-			f'sort -u {unfurl_filter} -o  {unfurl_filter}',
-			shell=True,
-			history_file=self.history_file,
-			scan_id=self.scan_id,
-			activity_id=self.activity_id)
-		input_path = unfurl_filter
+        original_input_path = input_path
+
+        if intensity == 'normal': # reduce number of endpoints to scan
+                unfurl_filter = f'{self.results_dir}/urls_unfurled.txt'
+                run_command(
+                        f"cat {input_path} | unfurl -u format %s://%d%p |uro > {unfurl_filter}",
+                        shell=True,
+                        history_file=self.history_file,
+                        scan_id=self.scan_id,
+                        activity_id=self.activity_id)
+                run_command(
+                        f'sort -u {unfurl_filter} -o  {unfurl_filter}',
+                        shell=True,
+                        history_file=self.history_file,
+                        scan_id=self.scan_id,
+                        activity_id=self.activity_id)
+                if os.path.exists(unfurl_filter) and os.path.getsize(unfurl_filter) == 0:
+                        shutil.copy(original_input_path, unfurl_filter)
+                input_path = unfurl_filter
 
 	# Build templates
 	# logger.info('Updating Nuclei templates ...')
