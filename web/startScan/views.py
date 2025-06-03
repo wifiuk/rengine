@@ -116,7 +116,8 @@ def detail_scan(request, id, slug):
         subdomains
         .values('name')
         .distinct()
-        .filter(http_status__exact=200)
+        .filter(http_status__gt=0, http_status__lt=500)
+        .exclude(http_status=404)
         .count()
     )
     important_count = (
@@ -136,7 +137,8 @@ def detail_scan(request, id, slug):
     )
     endpoint_alive_count = (
         endpoints
-        .filter(http_status__exact=200) # TODO: use is_alive() func as it's more precise
+        .filter(http_status__gt=0, http_status__lt=500)
+        .exclude(http_status=404)
         .values('http_url')
         .distinct()
         .count()
@@ -218,7 +220,11 @@ def detail_scan(request, id, slug):
 def all_subdomains(request, slug):
     subdomains = Subdomain.objects.filter(target_domain__project__slug=slug)
     scan_engines = EngineType.objects.order_by('engine_name').all()
-    alive_subdomains = subdomains.filter(http_status__exact=200) # TODO: replace this with is_alive() function
+    alive_subdomains = (
+        subdomains
+        .filter(http_status__gt=0, http_status__lt=500)
+        .exclude(http_status=404)
+    )
     important_subdomains = (
         subdomains
         .filter(is_important=True)
@@ -1041,7 +1047,8 @@ def create_report(request, id):
         .filter(scan_history__id=id)
         .values('name')
         .distinct()
-        .filter(http_status__exact=200)
+        .filter(http_status__gt=0, http_status__lt=500)
+        .exclude(http_status=404)
         .count()
     )
     interesting_subdomains = get_interesting_subdomains(scan_history=id)
